@@ -1,0 +1,5 @@
+1|Alex Morgan|alex.morgan@university.edu|+1-555-0101|Student|2024-01-15|Active|1
+2|Prof. David Mitchell|d.mitchell@university.edu|+1-555-0102|Faculty|2023-08-20|Active|1
+3|Samantha Ray|samantha.r@university.edu|+1-555-0103|Student|2024-02-10|Active|1
+4|Dr. Elena Rostova|elena.r@research.org|+1-555-0104|Faculty|2023-11-05|Active|0
+5|Marcus Chen|marcus.chen@tech.org|+1-555-0105|Guest|2024-03-01|Active|0

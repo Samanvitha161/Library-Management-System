@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library Management System</title>
+  <link rel="stylesheet" href="frontend/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Simple Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <h1 class="brand-title">Library Management System</h1>
+        <span class="c-badge">Mini Project</span>
+      </div>
+      <div class="nav-actions">
+        <button class="btn btn-primary" onclick="app.openAddBookModal()">
+          + Add New Book
+        </button>
+        <button class="btn btn-outline" onclick="app.exportBooksTxt()" title="Export books.txt for C backend">
+          Export books.txt
+        </button>
+        <label class="btn btn-outline" style="margin: 0; cursor: pointer;" title="Import books.txt from C backend">
+          Import books.txt
+          <input type="file" accept=".txt" onchange="app.importBooksTxt(event)" style="display: none;">
+        </label>
+        <button class="btn btn-outline" onclick="app.resetSampleBooks()" title="Reset default sample books">
+          Reset Sample Books
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="main-container">
+
+    <!-- Summary Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-box">
+        <span class="stat-label">Total Titles</span>
+        <span class="stat-value" id="statTitles">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Total Copies</span>
+        <span class="stat-value" id="statTotalCopies">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Available Copies</span>
+        <span class="stat-value text-success" id="statAvailableCopies">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Currently Borrowed</span>
+        <span class="stat-value text-muted" id="statBorrowedCopies">0</span>
+      </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="controls-panel">
+      <!-- Search Option Bar -->
+      <div class="search-header-row">
+        <label for="searchInput" class="search-label-title">Search Books</label>
+        <div class="search-group">
+          <select id="searchField" class="search-field-select" title="Select field to search in" onchange="app.handleSearchFieldChange()">
+            <option value="all">Search All Fields</option>
+            <option value="title">By Title</option>
+            <option value="author">By Author</option>
+            <option value="category">By Category</option>
+            <option value="isbn">By ISBN</option>
+            <option value="shelf">By Shelf Location</option>
+          </select>
+          <div class="search-input-wrapper">
+            <input type="text" id="searchInput" placeholder="Type keyword to search books (e.g. C, Algorithms, Clean)..." autocomplete="off">
+            <button class="btn-clear" id="btnClearSearch" onclick="app.clearSearch()" title="Clear search text" style="display:none;">&times;</button>
+          </div>
+          <button class="btn btn-primary btn-search" id="btnSearch" onclick="app.executeSearch()" title="Click to search">
+            Search
+          </button>
+          <button class="btn btn-outline btn-reset" onclick="app.clearSearch()" title="Reset search & filters">
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Category Filter Pills -->
+      <div class="category-filters-row">
+        <span class="category-label-title">Filter by Category:</span>
+        <div class="category-filters" id="categoryFilters">
+          <button class="pill active" data-category="All">All Books</button>
+          <button class="pill" data-category="Computer Science">Computer Science</button>
+          <button class="pill" data-category="Software Engineering">Software Eng</button>
+          <button class="pill" data-category="Artificial Intelligence">AI</button>
+          <button class="pill" data-category="Operating Systems">Operating Systems</button>
+          <button class="pill" data-category="Database Systems">Databases</button>
+          <button class="pill" data-category="Literature">Literature</button>
+        </div>
+      </div>
+
+      <!-- Active Search Results Status Bar -->
+      <div class="search-status-bar" id="searchStatusBar" style="display: none;">
+        <span id="searchStatusText">Showing search results</span>
+        <button class="btn-link-clear" onclick="app.clearSearch()">Clear Search</button>
+      </div>
+    </div>
+
+    <!-- Books Table Container -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <h2 class="section-title">Books Inventory</h2>
+        <span class="count-badge" id="booksCountBadge">0 books</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="books-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">ID</th>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Category</th>
+              <th>ISBN</th>
+              <th>Year</th>
+              <th>Copies</th>
+              <th>Shelf</th>
+              <th>Status</th>
+              <th style="min-width: 220px; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="booksTableBody">
+            <tr>
+              <td colspan="10" class="text-center" style="padding: 2rem;">Loading books...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: ADD / EDIT BOOK -->
+  <div class="modal-overlay" id="bookModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add New Book</h3>
+        <button class="btn-modal-close" onclick="app.closeModal('bookModal')">&times;</button>
+      </div>
+      <form id="bookForm" onsubmit="app.handleSaveBook(event)">
+        <input type="hidden" id="bookId">
+
+        <div class="form-group">
+          <label for="bookTitle">Book Title *</label>
+          <input type="text" id="bookTitle" required placeholder="e.g. The C Programming Language">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bookAuthor">Author *</label>
+            <input type="text" id="bookAuthor" required placeholder="e.g. Dennis M. Ritchie">
+          </div>
+          <div class="form-group">
+            <label for="bookCategory">Category *</label>
+            <select id="bookCategory" required>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Software Engineering">Software Engineering</option>
+              <option value="Artificial Intelligence">Artificial Intelligence</option>
+              <option value="Operating Systems">Operating Systems</option>
+              <option value="Database Systems">Database Systems</option>
+              <option value="Literature">Literature</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bookIsbn">ISBN *</label>
+            <input type="text" id="bookIsbn" required placeholder="e.g. 978-0131103627">
+          </div>
+          <div class="form-group">
+            <label for="bookYear">Publication Year</label>
+            <input type="number" id="bookYear" min="1900" max="2099" value="2024">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bookCopies">Total Copies *</label>
+            <input type="number" id="bookCopies" min="1" max="500" value="3" required>
+          </div>
+          <div class="form-group">
+            <label for="bookShelf">Shelf Location</label>
+            <input type="text" id="bookShelf" placeholder="e.g. A-101">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="app.closeModal('bookModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveSubmit">Save Book</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RETURN SUCCESS & EDIT OPTION -->
+  <div class="modal-overlay" id="returnSuccessModal">
+    <div class="modal-box" style="max-width: 460px;">
+      <div class="modal-header">
+        <h3>Book Returned Successfully</h3>
+        <button class="btn-modal-close" onclick="app.closeModal('returnSuccessModal')">&times;</button>
+      </div>
+      <div style="padding: 1.5rem;">
+        <p style="margin-bottom: 0.5rem; color: var(--text-main); font-weight: 600;" id="returnSuccessBookTitle">Book Title</p>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          The book has been checked in and restocked into inventory. Would you like to edit its details now (such as shelf location, copies, or condition)?
+        </p>
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button type="button" class="btn btn-outline" onclick="app.closeModal('returnSuccessModal')">No, Done</button>
+          <button type="button" class="btn btn-primary" onclick="app.confirmEditAfterReturn()">Yes, Edit Book Details</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-box" id="toastBox"></div>
+
+  <!-- Standalone Script (Zero Backend Server Required) -->
+  <script src="frontend/js/app.js"></script>
+</body>
+</html>
